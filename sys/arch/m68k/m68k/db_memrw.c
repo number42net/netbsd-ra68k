@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.7 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.9 2025/11/08 08:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,29 +28,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.9 2025/11/08 08:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -109,7 +109,8 @@ static void
 db_write_text(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst, *odst;
-	pt_entry_t *pte, oldpte, tmppte;
+	volatile pt_entry_t *pte;
+	pt_entry_t oldpte, tmppte;
 	vaddr_t pgva;
 	int limit;
 
@@ -145,16 +146,22 @@ db_write_text(db_addr_t addr, size_t size, const char *data)
 #endif
 
 		/*
+		 * N.B. we use the 68851 PTE bit names here, but in
+		 * the case of the kernel text, it all works out vis
+		 * a vis the 68040 PTE bits.
+		 */
+
+		/*
 		 * Make the page writable.  Note the mapping is
 		 * cache-inhibited to save hair.
 		 */
 		pte = kvtopte(pgva);
 		oldpte = *pte;
-		if ((oldpte & PG_V) == 0) {
+		if ((oldpte & DT51_PAGE) == 0) {
 			printf(" address %p not a valid page\n", dst);
 			return;
 		}
-		tmppte = (oldpte & ~PG_RO) | PG_RW | PG_CI;
+		tmppte = (oldpte & ~PTE51_WP) | PTE51_CI;
 		*pte = tmppte;
 		TBIS((vaddr_t)odst);
 

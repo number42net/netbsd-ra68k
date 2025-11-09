@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 2013/10/25 20:53:02 martin Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.44 2025/11/06 20:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,20 +39,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2013/10/25 20:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.44 2025/11/06 20:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 
 #include <machine/frame.h>
-#include <machine/pte.h>
 #include <machine/pcb.h>
 
 #include <uvm/uvm_extern.h>
@@ -152,7 +150,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	struct pmap *upmap, *kpmap __unused;
 	vaddr_t uva;		/* User VA (map from) */
 	vaddr_t kva;		/* Kernel VA (new to) */
-	paddr_t pa; 		/* physical address */
+	paddr_t pa;		/* physical address */
 	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -210,55 +208,3 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
-
-
-#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
-
-#include <m68k/cacheops.h>
-
-/*
- * Map `size' bytes of physical memory starting at `paddr' into
- * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
- * are specified by `prot'.
- */
-void
-physaccess(void *vaddr, void *paddr, int size, int prot)
-{
-	pt_entry_t *pte;
-	u_int page;
-
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*pte++ = PG_V | prot | page;
-		page += PAGE_SIZE;
-	}
-	TBIAS();
-}
-
-void
-physunaccess(void *vaddr, int size)
-{
-	pt_entry_t *pte;
-
-	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*pte++ = PG_NV;
-	TBIAS();
-}
-
-/*
- * Convert kernel VA to physical address
- */
-int
-kvtop(void *addr)
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == false)
-		panic("kvtop: zero page frame");
-	return (int)pa;
-}
-
-#endif
-

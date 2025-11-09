@@ -1,0 +1,67 @@
+#	$NetBSD: files.re86k,v 1.5 2025/11/08 08:26:08 thorpej Exp $
+
+# config file for re86k
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+defflag	opt_m060sp.h		M060SP
+
+# Generic devices
+include "dev/scsipi/files.scsipi"		# SCSI
+
+device mainbus { [addr = -1] }
+attach mainbus at root
+file arch/re86k/dev/mainbus.c			mainbus
+
+# MC68681 Dual UART (serial console)
+device	duart: tty
+file	arch/re86k/dev/duart.c		duart	needs-flag
+attach	duart at mainbus with duart_mainbus
+file	arch/re86k/dev/duart_mainbus.c	duart_mainbus
+
+# Memory disk for installer
+file dev/md_root.c				memory_disk_hooks
+
+file arch/re86k/re86k/autoconf.c
+file arch/re86k/re86k/bootinfo.c
+file arch/re86k/re86k/bus_dma.c
+file arch/re86k/re86k/bus_space.c
+file arch/re86k/re86k/clock.c
+file arch/re86k/re86k/disksubr.c
+file arch/re86k/re86k/intr.c
+file arch/re86k/re86k/machdep.c
+file arch/re86k/re86k/pmap_bootstrap.c		compile-with "${NOPROF_C}"
+file arch/re86k/re86k/trap.c
+
+file arch/m68k/m68k/cacheops.c
+file arch/m68k/m68k/db_memrw.c			ddb | kgdb
+file arch/m68k/m68k/kgdb_machdep.c		kgdb
+file arch/m68k/m68k/m68k_trap.c
+file arch/m68k/m68k/mmu_subr.s
+file arch/m68k/m68k/pmap_motorola.c
+file arch/m68k/m68k/procfs_machdep.c		procfs
+file arch/m68k/m68k/sys_machdep.c
+file arch/m68k/m68k/vectors.c
+file arch/m68k/m68k/vm_machdep.c
+file dev/cons.c
+
+# Motorola 68060 support package
+include "arch/m68k/060sp/files.060sp"
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c		compat_linux
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+include	"arch/re86k/conf/majors.re86k"

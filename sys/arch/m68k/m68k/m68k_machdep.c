@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.10 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.12 2025/03/16 15:34:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.10 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.12 2025/03/16 15:34:59 riastradh Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -87,11 +87,13 @@ extern short exframesize[];
 /*
  * Set registers on exec.
  */
-void 
+void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);
+
+	memset(tf, 0, sizeof(*tf));
 
 	tf->tf_sr = PSL_USERSET;
 	tf->tf_pc = pack->ep_entry & ~1;

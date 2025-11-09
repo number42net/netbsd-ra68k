@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_sigreturn13.s,v 1.7.60.1 2024/06/27 19:27:27 martin Exp $	*/
+/*	$NetBSD: compat_13_sigreturn13.s,v 1.8 2024/01/17 12:19:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

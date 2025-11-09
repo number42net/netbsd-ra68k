@@ -28,6 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 __RCSID("$NetBSD: strtonum.c,v 1.6.10.1 2024/08/23 16:15:13 martin Exp $");
 
